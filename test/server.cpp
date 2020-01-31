@@ -1,12 +1,9 @@
 #include <iostream>
-#include "server_TCPSocket.h"
+
+#include "server.h"
 
 int main(int argc, char *argv[])
 {
-	int new_sockfd;
-	char buffer[256];
-	int bytes_cnt;
-
 	// Port argument required
 	if (argc < 2) {
 		std::cerr << "Usage: ./server <port>\n";
@@ -16,31 +13,16 @@ int main(int argc, char *argv[])
 	// Get port number (passed as argument)
 	int port = std::stoi(argv[1]);
 
-	ServerTCPSocket socket(port);
+	Server server(port);
 
-	socket.createSocket();
+	server.createSocket();
 
-	socket.bindSocketToAddress();
+	server.bindSocketToAddress();
 
-	socket.listenOnSocket();
+	server.listenOnSocket();
 
-	new_sockfd = socket.acceptConnection();
-
-	memset(buffer, 0, 256);
-
-	bytes_cnt = read(new_sockfd, buffer, 255);
-	if (bytes_cnt < 0) {
-		std::cerr << "ERROR reading from socket\n";
-	}
-		
-	std::cout << "Here is the message: " << buffer << std::endl;
-
-	bytes_cnt = write(new_sockfd, "I got your message", 18);
-	if (bytes_cnt < 0) {
-		std::cerr << "ERROR writing to socket\n";
-	}
-
-	close(new_sockfd);
+	// Serve clients (infinite loop)
+	server.serve();
 
 	return 0; 
 }
