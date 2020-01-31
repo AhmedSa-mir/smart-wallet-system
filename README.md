@@ -4,6 +4,8 @@ A simple C++ smart wallet system built on TCP sockets
 ## Installation
 
 ```
+mkdir bin
+mkdir build
 cd build/
 cmake ..
 make
@@ -12,13 +14,13 @@ make
 ## Usage
 
 
-Run the server
+Run server
 ```
 cd bin/
 ./server <port number>
 ```
 
-Run the client 
+Run client 
 ```
 cd bin/
 ./client 127.0.0.1 <port number>

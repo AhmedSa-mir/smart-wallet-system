@@ -1,3 +1,7 @@
+
+#ifndef TCPSOCKET_H_
+#define TCPSOCKET_H_
+
 #include <iostream>
 #include <string.h>
 #include <unistd.h>
@@ -10,9 +14,14 @@ class TCPSocket {
 public:
 	TCPSocket(int port);
 	~TCPSocket();
-	void createSocket();
+
+	int createSocket();
+	int getSockfd();
+	
 protected:	
 	const int port_;
 	int sockfd_;
 	struct sockaddr_in addr_;
 };
+
+#endif

@@ -5,7 +5,8 @@
 int main(int argc, char *argv[])
 {
 	// Port argument required
-	if (argc < 2) {
+	if (argc < 2)
+	{
 		std::cerr << "Usage: ./server <port>\n";
 		return -1;
 	}
@@ -15,11 +16,26 @@ int main(int argc, char *argv[])
 
 	Server server(port);
 
-	server.createSocket();
+	int ret = server.createSocket();
+	if(ret == -1)
+	{
+		std::cout << "Error on create socket\n";
+		return -1;
+	}
 
-	server.bindSocketToAddress();
+	ret = server.bindSocketToAddress();
+	if(ret == -1)
+	{
+		std::cout << "Error on bind\n";
+		return -1;
+	}
 
-	server.listenOnSocket();
+	ret = server.listenOnSocket();
+	if(ret == -1)
+	{
+		std::cout << "Error on listen\n";
+		return -1;
+	}
 
 	// Serve clients (infinite loop)
 	server.serve();

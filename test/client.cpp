@@ -5,7 +5,8 @@
 int main(int argc, char *argv[])
 {
     // Server IP & Port arguments required
-    if (argc < 3) {
+    if (argc < 3)
+    {
         std::cerr << "Usage: " << argv[0] << " <IP> <port>\n";
         return -1;
     }
@@ -16,8 +17,13 @@ int main(int argc, char *argv[])
 
     Client client(port, server_ip);
 
-    client.createSocket();
-    
+    int ret = client.createSocket();
+    if(ret == -1)
+    {
+        std::cout << "Error on create socket\n";
+        return -1;
+    }
+
     // Request services from the server
     client.run();
 
