@@ -44,7 +44,7 @@ void Server::handleClient(int sockfd)
 	pthread_exit(NULL);
 }
 
-void Server::serve()
+void Server::run()
 {
 	while(true)
 	{

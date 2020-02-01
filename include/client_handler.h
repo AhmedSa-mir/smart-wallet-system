@@ -6,6 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sstream>
+#include <mysql.h>
 
 #include "client_info.h"
 #include "communication.h"
@@ -28,6 +29,12 @@ public:
 	std::string recvRequest(int sockfd);
 	bool processRequest(std::string data, Response& response);
 	bool serveRequests(int sockfd);
+
+private:
+	ClientInfo client_info_;
+	MYSQL *conn_;
+	MYSQL_RES *res_;
+	MYSQL_ROW row_;
 };
 
 #endif

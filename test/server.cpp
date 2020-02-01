@@ -2,6 +2,7 @@
 
 #include "server.h"
 
+
 int main(int argc, char *argv[])
 {
 	// Port argument required
@@ -38,7 +39,7 @@ int main(int argc, char *argv[])
 	}
 
 	// Serve clients (infinite loop)
-	server.serve();
+	server.run();
 
 	return 0; 
 }

@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8.9)
 project(smart_wallet)
 
 include_directories(include)
+include_directories(/usr/include/mysql)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)

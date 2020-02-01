@@ -5,6 +5,7 @@
 #include <string>
 
 typedef struct ClientInfo {
+	unsigned long id;
 	std::string name;
 	unsigned long national_id;
 	unsigned int age;

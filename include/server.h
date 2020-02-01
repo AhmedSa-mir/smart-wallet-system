@@ -21,7 +21,7 @@ public:
 	int listenOnSocket();
 	int acceptConnection();
 
-	void serve();
+	void run();
 	void handleClient(int sockfd);
 
 private:

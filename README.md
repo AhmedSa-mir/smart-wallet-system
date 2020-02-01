@@ -1,5 +1,13 @@
 # Smart Wallet System
-A simple C++ smart wallet system built on TCP sockets
+A simple C++ smart wallet system built on TCP sockets and MySQL
+
+## Dependencies
+
+mysql
+
+```
+sudo apt-get install mysql-server-5.7
+``` 
 
 ## Installation
 
@@ -7,7 +15,7 @@ A simple C++ smart wallet system built on TCP sockets
 mkdir bin
 mkdir build
 cd build/
-cmake ..
+cmake -DMYSQL_LIBRARY=<path_to_libmysqlclient.so> ..
 make
 ```
 
@@ -27,4 +35,4 @@ cd bin/
 ```
 
 PS:
-You can change "127.0.0.1 (Localhost IP)" to make it run on different machines
+You can change "127.0.0.1" (Localhost IP) to make it run on different machines
