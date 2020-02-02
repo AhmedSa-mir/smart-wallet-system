@@ -23,28 +23,26 @@ ClientHandler::~ClientHandler()
 	mysql_close(conn_);
 }
 
-ClientInfo ClientHandler::getClientInfo(unsigned long national_id)
+bool ClientHandler::getClientInfo(unsigned long national_id, ClientInfo& client_info)
 {
-	ClientInfo client_info;
-
 	std::string query = "select * from customer where national_id = " + std::to_string(national_id);
 
 	std::cout << "Query: " << query << std::endl;
 	
 	if(mysql_query(conn_, query.c_str()))
 	{
-		//TODO: return bool
 		perror(mysql_error(conn_));
+		return false;
 	}
 	
 	// Get query result
 	res_ = mysql_store_result(conn_);
-	// res = mysql_use_result(conn);
 
 	unsigned int rows_cnt = mysql_num_rows(res_);
 	if(rows_cnt != 1)
 	{
 		std::cout << "Error: " << rows_cnt << " rows with the same national_id\n";
+		return false;
 	}
 	else
 	{
@@ -61,20 +59,20 @@ ClientInfo ClientHandler::getClientInfo(unsigned long national_id)
 		std::cout << "age: " << client_info.age << std::endl;
 		std::cout << "balance: " << client_info.balance << std::endl;
 	}
-	
-	return client_info;
+
+	return true;
 }
 
 bool ClientHandler::isValidId(std::string id)
 {
-	// TODO: Check id correctly
-	return (id.length() == 14);
+   return (id.find_first_not_of("0123456789") == std::string::npos)
+            && (id.length() == 14);
 }
 
 bool ClientHandler::isValidAge(int age)
 {
 	// TODO: Check age correctly
-	return (age > 0 && age < 200);
+	return (age > 18 && age < 200);
 }
 
 bool ClientHandler::createNewAccount(const ClientInfo& client_info)
@@ -163,7 +161,7 @@ bool ClientHandler::withdraw(unsigned long long amount)
 	return true;
 }
 
-unsigned long long ClientHandler::getBalance()
+bool ClientHandler::getBalance(unsigned long long& balance)
 {
 	std::string query = "select balance from customer where id = "
 					  + std::to_string(client_info_.id);
@@ -172,8 +170,8 @@ unsigned long long ClientHandler::getBalance()
 
 	if(mysql_query(conn_, query.c_str()))
 	{
-		//TODO: return bool
 		perror(mysql_error(conn_));
+		return false;
 	}
 	
 	// Get query result
@@ -184,11 +182,12 @@ unsigned long long ClientHandler::getBalance()
 	if(rows_cnt != 1)
 	{
 		std::cout << "Error: " << rows_cnt << " rows with the same id\n";
+		return false;
 	}
 	else
 	{
 		row_ = mysql_fetch_row(res_);
-		unsigned long long balance = strtoull(row_[0], NULL, 10);
+		balance = strtoull(row_[0], NULL, 10);
 
 		if(client_info_.balance != balance)
 		{
@@ -199,11 +198,9 @@ unsigned long long ClientHandler::getBalance()
 		{
 			std::cout << "Balance = " << balance << std::endl;
 		}
-
-		return balance;
 	}
-	
-	return 0;
+
+	return true;
 }
 
 void ClientHandler::sendResponse(Response response, int sockfd)
@@ -285,12 +282,19 @@ bool ClientHandler::processRequest(std::string data, Response& response)
 		}
 		else
 		{
-			client_info_ = getClientInfo(std::stoul(national_id));
-
-			// Send success + client name
-			response.status = SUCCESS;
-			strcpy(response.data, client_info_.name.c_str());
-			response.size = strlen(response.data);
+			bool ret = getClientInfo(std::stoul(national_id), client_info_);
+			if(!ret)
+			{
+				std::cout << "Error getting client info from DB\n";
+				response.status = FAIL;
+			}
+			else 
+			{
+				// Send success + client name
+				response.status = SUCCESS;
+				strcpy(response.data, client_info_.name.c_str());
+				response.size = strlen(response.data);
+			}
 		}
 	}
 	else if(type == REGISTER)
@@ -323,17 +327,19 @@ bool ClientHandler::processRequest(std::string data, Response& response)
 			client_info.age = stoi(age);
 			client_info.balance = 0;
 
-			bool err = !createNewAccount(client_info);
-			if(err)
+			bool ret = createNewAccount(client_info);
+			if(!ret)
 			{
 				std::cout << "Error creating new account\n";
 				response.status = FAIL;
 			}
-
-			// Send success + client name
-			response.status = SUCCESS;
-			strcpy(response.data, client_info.name.c_str());
-			response.size = strlen(response.data);
+			else 
+			{
+				// Send success + client name
+				response.status = SUCCESS;
+				strcpy(response.data, client_info.name.c_str());
+				response.size = strlen(response.data);
+			}
 		}
 	}
 	else if(type == DEPOSIT)
@@ -347,8 +353,16 @@ bool ClientHandler::processRequest(std::string data, Response& response)
 		}
 		else
 		{
-			deposit(amount);
-			response.status = SUCCESS;
+			bool ret = deposit(amount);
+			if(!ret)
+			{
+				std::cout << "Error withdraw from DB\n";
+				response.status = FAIL;
+			}
+			else 
+			{
+				response.status = SUCCESS;
+			}
 		}
 	}
 	else if(type == WITHDRAW)
@@ -363,28 +377,53 @@ bool ClientHandler::processRequest(std::string data, Response& response)
 		else
 		{	
 			// Check for balance first
-			unsigned long long balance = getBalance();
-
-			if(amount > balance)
+			unsigned long long balance;
+			bool ret = getBalance(balance);
+			if(!ret)
 			{
-				std::cout << "Not enough money in your account!\n";
-				response.status = NOT_ENOUGH_MONEY;
+				std::cout << "Error getting balance from DB\n";
+				response.status = FAIL;
 			}
-			else
+			else 
 			{
-				withdraw(amount);
-				response.status = SUCCESS;
+				if(amount > balance)
+				{
+					std::cout << "Not enough money in your account!\n";
+					response.status = NOT_ENOUGH_MONEY;
+				}
+				else
+				{
+					bool ret = withdraw(amount);
+					if(!ret)
+					{
+						std::cout << "Error withdraw from DB\n";
+						response.status = FAIL;
+					}
+					else 
+					{
+						response.status = SUCCESS;
+					}
+				}
 			}
 		}
 	}
 	else if(type == CHECK_BALANCE)
 	{
-		unsigned long long balance = getBalance();
+		unsigned long long balance;
 
-		// Send success + balance
-		response.status = SUCCESS;
-		strcpy(response.data,  std::to_string(balance).c_str());
-		response.size = strlen(response.data);
+		bool ret = getBalance(balance);
+		if(!ret)
+		{
+			std::cout << "Error getting balance from DB\n";
+			response.status = FAIL;
+		}
+		else 
+		{
+			// Send success + balance
+			response.status = SUCCESS;
+			strcpy(response.data,  std::to_string(balance).c_str());
+			response.size = strlen(response.data);
+		}
 	}
 	else if(type == BYE)
 	{		

@@ -40,8 +40,6 @@ void Server::handleClient(int sockfd)
 	close(sockfd);
 
 	std::cout << "Client handler thread exiting\n";
-
-	pthread_exit(NULL);
 }
 
 void Server::run()

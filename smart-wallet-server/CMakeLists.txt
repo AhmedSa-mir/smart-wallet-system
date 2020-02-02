@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8.9)
 project(smart_wallet)
 
+include_directories(../include)
 include_directories(include)
 include_directories(/usr/include/mysql)
 

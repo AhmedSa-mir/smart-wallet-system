@@ -6,9 +6,9 @@
 int main(int argc, char *argv[])
 {
 	// Port argument required
-	if (argc < 2)
+	if (argc != 2)
 	{
-		std::cerr << "Usage: ./server <port>\n";
+		std::cerr << "Usage: " << argv[0] << " <port>\n";
 		return -1;
 	}
 

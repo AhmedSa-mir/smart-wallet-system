@@ -16,14 +16,14 @@ public:
 	ClientHandler();
 	~ClientHandler();
 
-	ClientInfo getClientInfo(unsigned long national_id);
+	bool getClientInfo(unsigned long national_id, ClientInfo& client_info);
 	bool isValidId(std::string id);
 	bool isValidAge(int age);
 
 	bool createNewAccount(const ClientInfo& client_info);
 	bool deposit(unsigned long long balance);
 	bool withdraw(unsigned long long balance);
-	unsigned long long getBalance();
+	bool getBalance(unsigned long long& balance);
 
 	void sendResponse(Response response, int sockfd);
 	std::string recvRequest(int sockfd);
