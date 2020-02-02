@@ -1,6 +1,6 @@
 
-#ifndef COMMUNICATION_H_
-#define COMMUNICATION_H_
+#ifndef DEFS_H_
+#define DEFS_H_
 
 #include <stdint.h>
 
@@ -21,5 +21,11 @@ typedef struct Response {
 	uint32_t size;
 	RESPONSE_STATUS status;
 } Response;
+
+typedef struct Transaction {
+	unsigned long id;
+	REQUEST_TYPE type;
+	unsigned long long amount;
+} Transaction;
 
 #endif

@@ -9,11 +9,12 @@
 #include <mysql.h>
 
 #include "client_info.h"
-#include "communication.h"
+#include "defs.h"
+#include "thread-safe_queue.h"
 
 class ClientHandler {
 public:
-	ClientHandler();
+	ClientHandler(ThreadSafeQueue<Transaction>* loggingQueue);
 	~ClientHandler();
 
 	bool getClientInfo(unsigned long national_id, ClientInfo& client_info);
@@ -35,6 +36,7 @@ private:
 	MYSQL *conn_;
 	MYSQL_RES *res_;
 	MYSQL_ROW row_;
+	ThreadSafeQueue<Transaction>* loggingQueue_;
 };
 
 #endif

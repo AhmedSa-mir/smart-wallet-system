@@ -73,7 +73,7 @@ void MainWindow::on_login_button_clicked()
         }
         else if(response.status == FAIL)
         {
-             ui->statusBar->showMessage("Server response: Fail!");
+             ui->statusBar->showMessage("Server response: Failed!");
         }
         else if(response.status == SUCCESS)
         {
@@ -139,7 +139,7 @@ void MainWindow::on_register_button_clicked()
         }
         else if(response.status == FAIL)
         {
-            ui->statusBar->showMessage("Server response: Fail!");
+            ui->statusBar->showMessage("Server response: Failed!");
         }
         else if(response.status == SUCCESS)
         {
@@ -183,7 +183,8 @@ void MainWindow::on_checkbalance_button_clicked()
 
     if(response.status == FAIL)
     {
-        std::cout << "Server response: Fail!";
+        ui->response_label->setText("Server response: Failed!");
+        ui->stackedWidget->setCurrentIndex(RESPONSE_PAGE);
     }
     else if(response.status == SUCCESS)
     {
@@ -218,7 +219,7 @@ void MainWindow::on_ok_button_clicked()
 
         if(response.status == NOT_ENOUGH_MONEY)
         {
-            ui->response_label->setText("Not enough money!");
+            ui->response_label->setText("Transaction Failed: Not enough money!");
             ui->stackedWidget->setCurrentIndex(RESPONSE_PAGE);
         }
         else if(response.status == INVALID_AMOUNT)
@@ -228,7 +229,7 @@ void MainWindow::on_ok_button_clicked()
         }
         else if(response.status == FAIL)
         {
-            ui->response_label->setText("Server response: Fail!");
+            ui->response_label->setText("Server response: Failed!");
             ui->stackedWidget->setCurrentIndex(RESPONSE_PAGE);
         }
         else if(response.status == SUCCESS)
@@ -255,36 +256,47 @@ void MainWindow::on_undo_button_clicked()
 {
     ui->statusBar->clearMessage();
 
-    Request request = client.popUndoStack();
-    Response response;
+    Request undo_request = client.popUndoStack();
+    Response undo_response;
 
-    if(request.type == DEPOSIT)
+    if(undo_request.type == DEPOSIT)
     {
-        request.type = WITHDRAW;
+        undo_request.type = WITHDRAW;
     }
-    else if(request.type == WITHDRAW)
+    else if(undo_request.type == WITHDRAW)
     {
-        request.type = DEPOSIT;
+        undo_request.type = DEPOSIT;
     }
 
-    client.sendRequest(request);
-    client.recvResponse(response);
+    client.sendRequest(undo_request);
+    client.recvResponse(undo_response);
 
-    if(response.status == FAIL)
+    if(undo_response.status == FAIL)
     {
-        ui->statusBar->showMessage("Server response: Fail!");
-        client.pushUndoStack(request);    // return it into the stack again
+        ui->statusBar->showMessage("Server response: Failed!");
+        client.pushUndoStack(undo_request);    // return it into the stack again
     }
-    else if(response.status == SUCCESS)
+    else if(undo_response.status == SUCCESS)
     {
-        ui->statusBar->showMessage("Undo last transaction: success!");
+        if(undo_request.type == DEPOSIT)
+        {
+            std::string amount(undo_request.data);
+            ui->statusBar->showMessage(QString::fromStdString(
+                           "Undo last transaction (WITHDRAW " + amount + "$): success!"));
+        }
+        else if(undo_request.type == WITHDRAW)
+        {
+            std::string amount(undo_request.data);
+            ui->statusBar->showMessage(QString::fromStdString(
+                           "Undo last transaction (DEPOSIT " + amount + "$): success!"));
+        }
 
         if(client.isUndoStackEmpty())
         {
             ui->undo_button->setDisabled(true);
         }
 
-        client.pushRedoStack(request);
+        client.pushRedoStack(undo_request);
         if(!ui->redo_button->isEnabled())
         {
             ui->redo_button->setEnabled(true);
@@ -296,29 +308,40 @@ void MainWindow::on_redo_button_clicked()
 {
     ui->statusBar->clearMessage();
 
-    Request request = client.popRedoStack();
-    Response response;
+    Request redo_request = client.popRedoStack();
+    Response redo_response;
 
-    if(request.type == DEPOSIT)
+    if(redo_request.type == DEPOSIT)
     {
-        request.type = WITHDRAW;
+        redo_request.type = WITHDRAW;
     }
-    else if(request.type == WITHDRAW)
+    else if(redo_request.type == WITHDRAW)
     {
-        request.type = DEPOSIT;
+        redo_request.type = DEPOSIT;
     }
 
-    client.sendRequest(request);
-    client.recvResponse(response);
+    client.sendRequest(redo_request);
+    client.recvResponse(redo_response);
 
-    if(response.status == FAIL)
+    if(redo_response.status == FAIL)
     {
-        ui->statusBar->showMessage("Server response: Fail!");
-        client.pushRedoStack(request);    // return it into the stack again
+        ui->statusBar->showMessage("Server response: Failed!");
+        client.pushRedoStack(redo_request);    // return it into the stack again
     }
-    else if(response.status == SUCCESS)
+    else if(redo_response.status == SUCCESS)
     {
-        ui->statusBar->showMessage("Redo last transaction: success!");
+        if(redo_request.type == DEPOSIT)
+        {
+            std::string amount(redo_request.data);
+            ui->statusBar->showMessage(QString::fromStdString(
+                           "Redo last transaction (WITHDRAW " + amount + "$): success!"));
+        }
+        else if(redo_request.type == WITHDRAW)
+        {
+            std::string amount(redo_request.data);
+            ui->statusBar->showMessage(QString::fromStdString(
+                           "Redo last transaction (DEPOSIT " + amount + "$): success!"));
+        }
 
         if(client.isRedoStackEmpty())
         {

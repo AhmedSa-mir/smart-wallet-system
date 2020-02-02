@@ -8,7 +8,7 @@
 #include <signal.h>
 #include <stack>
 
-#include "communication.h"
+#include "defs.h"
 #include "client_TCPSocket.h"
 
 class Client {

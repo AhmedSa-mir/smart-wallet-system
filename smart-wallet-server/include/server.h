@@ -4,12 +4,14 @@
 
 #include <thread>
 #include <sstream>
+#include <fstream>
 #include <errno.h>
 
-#include "communication.h"
+#include "defs.h"
 #include "client_info.h"
 #include "client_handler.h"
 #include "server_TCPSocket.h"
+#include "thread-safe_queue.h"
 
 class Server {
 public:
@@ -24,8 +26,11 @@ public:
 	void run();
 	void handleClient(int sockfd);
 
+	void logTransactions();
+
 private:
 	ServerTCPSocket* socket_;
+	ThreadSafeQueue<Transaction> loggingQueue;
 };
 
 #endif

@@ -1,19 +1,16 @@
 #include "client_handler.h"
 
-ClientHandler::ClientHandler()
+ClientHandler::ClientHandler(ThreadSafeQueue<Transaction>* loggingQueue)
 {
-	char *server = "localhost";
-	char *user = "root";
-	char *password = "root";
-	char *database = "smart-wallet";
-
 	conn_ = mysql_init(NULL);
 	
 	// Connect to DB
-	if(!mysql_real_connect(conn_, server, user, password, database, 0, NULL, 0))
+	if(!mysql_real_connect(conn_, "localhost", "root", "root", "smart-wallet", 0, NULL, 0))
 	{
 		perror(mysql_error(conn_));
-	}	
+	}
+
+	loggingQueue_ = loggingQueue;
 }
 
 ClientHandler::~ClientHandler()
@@ -136,6 +133,13 @@ bool ClientHandler::deposit(unsigned long long amount)
 		return false;
 	}
 
+	// Push transaction to be logged by the logging thread
+	Transaction transaction;
+	transaction.id = client_info_.id;
+	transaction.type = DEPOSIT;
+	transaction.amount = amount;
+	loggingQueue_->push(transaction);
+
 	// Update data to be synced with DB
 	client_info_.balance += amount;
 
@@ -154,6 +158,13 @@ bool ClientHandler::withdraw(unsigned long long amount)
 		perror(mysql_error(conn_));
 		return false;
 	}
+
+	// Push transaction to be logged by the logging thread
+	Transaction transaction;
+	transaction.id = client_info_.id;
+	transaction.type = WITHDRAW;
+	transaction.amount = amount;
+	loggingQueue_->push(transaction);
 
 	// Update data to be synced with DB
 	client_info_.balance -= amount;
