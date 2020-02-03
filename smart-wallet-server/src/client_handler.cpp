@@ -121,6 +121,20 @@ bool ClientHandler::createNewAccount(const ClientInfo& client_info)
 	return true;
 }
 
+std::string getCurrentTime()
+{
+	std::time_t rawtime;
+    std::tm* timeinfo;
+    char buffer[80];
+    std::string time;
+
+    std::time(&rawtime);
+    timeinfo = std::localtime(&rawtime);
+
+    std::strftime(buffer,80,"%Y-%m-%d",timeinfo);
+    return std::string(buffer);
+}
+
 bool ClientHandler::deposit(unsigned long long amount)
 {
 	std::string query = "update customer set balance = balance + " + std::to_string(amount)
@@ -134,11 +148,28 @@ bool ClientHandler::deposit(unsigned long long amount)
 		return false;
 	}
 
+	std::string date = getCurrentTime();
+
+	query = "insert into transaction(customer_id, type, amount, date)"
+		  	" values(" + std::to_string(client_info_.id) + ",'DEPOSIT'," + std::to_string(amount)
+		  + ",'" + date +"')";
+					 
+
+	std::cout << "Query: " << query << std::endl;
+
+	if(mysql_query(conn_, query.c_str()))
+	{
+		perror(mysql_error(conn_));
+		return false;
+	}
+
 	// Push transaction to be logged by the logging thread
 	Transaction transaction;
-	transaction.id = client_info_.id;
+	transaction.customer_name = client_info_.name;
+	transaction.customer_id = client_info_.id;
 	transaction.type = DEPOSIT;
 	transaction.amount = amount;
+	transaction.date = date;
 	loggingQueue_->push(transaction);
 
 	// Update data to be synced with DB
@@ -160,11 +191,28 @@ bool ClientHandler::withdraw(unsigned long long amount)
 		return false;
 	}
 
+	std::string date = getCurrentTime();
+
+	query = "insert into transaction(customer_id, type, amount, date)"
+			" values(" + std::to_string(client_info_.id) + ",'WITHDRAW'," + std::to_string(amount)
+			+ ",'" + date +"')";
+					 
+
+	std::cout << "Query: " << query << std::endl;
+
+	if(mysql_query(conn_, query.c_str()))
+	{
+		perror(mysql_error(conn_));
+		return false;
+	}
+
 	// Push transaction to be logged by the logging thread
 	Transaction transaction;
-	transaction.id = client_info_.id;
+	transaction.customer_name = client_info_.name;
+	transaction.customer_id = client_info_.id;
 	transaction.type = WITHDRAW;
 	transaction.amount = amount;
+	transaction.date = date;
 	loggingQueue_->push(transaction);
 
 	// Update data to be synced with DB

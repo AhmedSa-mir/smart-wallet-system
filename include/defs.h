@@ -23,9 +23,11 @@ typedef struct Response {
 } Response;
 
 typedef struct Transaction {
-	unsigned long id;
+	std::string customer_name;
+	unsigned long customer_id;
 	REQUEST_TYPE type;
 	unsigned long long amount;
+	std::string date;
 } Transaction;
 
 #endif

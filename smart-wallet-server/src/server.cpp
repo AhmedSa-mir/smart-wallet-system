@@ -51,9 +51,11 @@ void Server::logTransactions()
 			request_type = "WITHDRAW";
 		}
 
-		logFile << transaction.id << " "
+		logFile << transaction.customer_name << " "
+				<< transaction.customer_id << " "
 				<< request_type << " "
-				<< transaction.amount << std::endl;
+				<< transaction.amount << " "
+				<< transaction.date << std::endl;
 	}
 
 	logFile.close();
