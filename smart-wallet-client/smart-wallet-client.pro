@@ -27,16 +27,16 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     src/client.cpp \
     src/client_TCPSocket.cpp \
-    src/TCPSocket.cpp \
+    ../src/TCPSocket.cpp \
     main.cpp \
     mainwindow.cpp \
     qcustomplot.cpp
 
 HEADERS += \
-    client.h \
-    client_TCPSocket.h \
-    defs.h \
-    TCPSocket.h \
+    include/client.h \
+    include/client_TCPSocket.h \
+    ../include/defs.h \
+    ../include/TCPSocket.h \
     mainwindow.h \
     qcustomplot.h
 
@@ -44,7 +44,20 @@ FORMS += \
     mainwindow.ui
 
 INCLUDEPATH += \
-   include
+   include \
+   ../include
 
 RESOURCES += \
     res.qrc
+
+release:DESTDIR = release
+release:OBJECTS_DIR = release/.obj
+release:MOC_DIR = release/.moc
+release:RCC_DIR = release/.rcc
+release:UI_DIR = release/.ui
+
+debug:DESTDIR = debug
+debug:OBJECTS_DIR = debug/.obj
+debug:MOC_DIR = debug/.moc
+debug:RCC_DIR = debug/.rcc
+debug:UI_DIR = debug/.ui

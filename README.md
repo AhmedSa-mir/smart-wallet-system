@@ -1,5 +1,5 @@
 # Smart Wallet System
-A simple QT C++ smart wallet system built on TCP sockets and MySQL
+A multi-threaded QT C++ smart wallet system. Built on TCP sockets to handle multiple clients and MySQL DB
 
 ## Dependencies
 
@@ -25,6 +25,8 @@ qmake
 make
 ```
 
+**P.S. Another way** You can create a qt project and add the files in smart-wallet-client dir
+
 ## Usage
 
 Run server
@@ -35,9 +37,8 @@ cd bin/
 
 Run client 
 ```
-cd <build dir>
+cd debug/
 ./smart-wallet-client 127.0.0.1 <port number>
 ```
 
-PS:
-You can change "127.0.0.1" (Localhost IP) to make it run on different machines
+**P.S.** You can change "127.0.0.1" (Localhost IP) to make it run on different machines
