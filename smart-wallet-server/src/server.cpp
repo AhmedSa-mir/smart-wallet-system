@@ -80,7 +80,7 @@ void Server::run()
 	// Spawn a thread to log transactions
 	std::thread logging_thread(&Server::logTransactions, this);
 
-	std::cout << "Logging thread spawned\n";
+        std::cout << "Logging thread spawned\nTransactions are logged in transactions.log file\n";
 
 	while(true)
 	{
