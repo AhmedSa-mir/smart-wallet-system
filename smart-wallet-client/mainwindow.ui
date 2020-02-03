@@ -29,7 +29,7 @@
        <string notr="true"/>
       </property>
       <property name="currentIndex">
-       <number>3</number>
+       <number>4</number>
       </property>
       <widget class="QWidget" name="login">
        <widget class="QLabel" name="id_label">
@@ -274,6 +274,28 @@ color: rgb(255, 255, 255);</string>
           <string>Female</string>
          </property>
         </item>
+       </widget>
+       <widget class="QPushButton" name="back_button_2">
+        <property name="geometry">
+         <rect>
+          <x>150</x>
+          <y>280</y>
+          <width>111</width>
+          <height>41</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(10, 94, 135);
+color: rgb(255, 255, 255);</string>
+        </property>
+        <property name="text">
+         <string>Back</string>
+        </property>
        </widget>
       </widget>
       <widget class="QWidget" name="main">
@@ -527,10 +549,10 @@ color: rgb(255, 255, 255);</string>
        <widget class="QPushButton" name="ok_button">
         <property name="geometry">
          <rect>
-          <x>260</x>
+          <x>270</x>
           <y>170</y>
-          <width>91</width>
-          <height>41</height>
+          <width>81</width>
+          <height>31</height>
          </rect>
         </property>
         <property name="styleSheet">
@@ -539,6 +561,28 @@ color: rgb(255, 255, 255);</string>
         </property>
         <property name="text">
          <string>OK</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="back_button_3">
+        <property name="geometry">
+         <rect>
+          <x>180</x>
+          <y>170</y>
+          <width>81</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>11</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(10, 94, 135);
+color: rgb(255, 255, 255);</string>
+        </property>
+        <property name="text">
+         <string>Back</string>
         </property>
        </widget>
       </widget>

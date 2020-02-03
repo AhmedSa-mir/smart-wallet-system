@@ -29,7 +29,7 @@ public:
     bool isValidAge(int age);
 
     RESPONSE_STATUS login(std::string national_id, std::string& name);
-    RESPONSE_STATUS register_new_client(std::string name,
+    RESPONSE_STATUS registerNewClient(std::string name,
                                         std::string national_id,
                                         std::string age,
                                         std::string gender);

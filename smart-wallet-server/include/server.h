@@ -30,7 +30,7 @@ public:
 
 private:
 	ServerTCPSocket* socket_;
-	ThreadSafeQueue<Transaction> loggingQueue;
+	ThreadSafeQueue<Transaction> logging_queue;
 };
 
 #endif

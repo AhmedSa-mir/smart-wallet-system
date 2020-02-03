@@ -17,7 +17,7 @@ class ThreadSafeQueue
     std::unique_lock<std::mutex> lock(mutex_);
     while (queue_.empty())
     {
-      cond_.wait(lock);
+      cond_var_.wait(lock);
     }
     item = queue_.front();
     queue_.pop();
@@ -28,13 +28,13 @@ class ThreadSafeQueue
     std::unique_lock<std::mutex> lock(mutex_);
     queue_.push(item);
     lock.unlock();
-    cond_.notify_one();
+    cond_var_.notify_one();
   }
  
  private:
   std::queue<T> queue_;
   std::mutex mutex_;
-  std::condition_variable cond_;
+  std::condition_variable cond_var_;
 };
 
 #endif

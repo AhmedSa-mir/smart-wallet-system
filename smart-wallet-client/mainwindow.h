@@ -47,7 +47,9 @@ private slots:
 
     void on_back_button_clicked();
 
-    void on_next_button_clicked();
+    void on_back_button_2_clicked();
+
+    void on_back_button_3_clicked();
 
 private:
     Ui::MainWindow *ui;

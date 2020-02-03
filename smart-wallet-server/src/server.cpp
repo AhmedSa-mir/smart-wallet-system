@@ -39,7 +39,7 @@ void Server::logTransactions()
 	while(true)
 	{
 
-		loggingQueue.pop(transaction);	// block for a transaction
+		logging_queue.pop(transaction);	// block for a transaction
 
 		std::string request_type;
 		if(transaction.type == DEPOSIT)
@@ -63,7 +63,9 @@ void Server::logTransactions()
 
 void Server::handleClient(int sockfd)
 {
-	ClientHandler client_handler(&loggingQueue);
+	ClientHandler client_handler(&logging_queue);
+
+	std::cout << "Client handler thread spawned\n";
 
 	// Keep serving client requests until receiving bye
 	while(client_handler.serveRequests(sockfd)){};
@@ -77,6 +79,8 @@ void Server::run()
 {
 	// Spawn a thread to log transactions
 	std::thread logging_thread(&Server::logTransactions, this);
+
+	std::cout << "Logging thread spawned\n";
 
 	while(true)
 	{

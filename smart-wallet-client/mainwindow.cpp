@@ -82,8 +82,6 @@ void MainWindow::on_register_button_clicked()
     std::string age = ui->input_age->text().toStdString();    
     std::string gender = ui->gender_combox->currentText().toStdString();
 
-    std::cout << "national_id= " << national_id << std::endl;
-
     if(name.empty())
     {
         ui->statusBar->showMessage("Please enter your name");
@@ -106,7 +104,7 @@ void MainWindow::on_register_button_clicked()
     }
     else
     {
-        RESPONSE_STATUS status = client.register_new_client(name, national_id, age, gender);
+        RESPONSE_STATUS status = client.registerNewClient(name, national_id, age, gender);
         if(status == INVALID_ID)
         {
             ui->statusBar->showMessage("Server response: Invalid ID!");
@@ -348,6 +346,16 @@ void MainWindow::on_statistics_button_clicked()
 }
 
 void MainWindow::on_back_button_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(MAIN_PAGE);
+}
+
+void MainWindow::on_back_button_2_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(LOGIN_PAGE);
+}
+
+void MainWindow::on_back_button_3_clicked()
 {
     ui->stackedWidget->setCurrentIndex(MAIN_PAGE);
 }

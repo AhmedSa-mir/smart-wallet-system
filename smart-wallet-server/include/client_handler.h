@@ -16,13 +16,10 @@
 
 class ClientHandler {
 public:
-	ClientHandler(ThreadSafeQueue<Transaction>* loggingQueue);
+	ClientHandler(ThreadSafeQueue<Transaction>* logging_queue);
 	~ClientHandler();
 
 	int getClientInfo(unsigned long national_id, ClientInfo& client_info);
-	bool isValidId(std::string id);
-	bool isValidAge(int age);
-
 	bool createNewAccount(const ClientInfo& client_info);
 	bool deposit(unsigned long long balance);
 	bool withdraw(unsigned long long balance);
@@ -35,15 +32,18 @@ public:
 	bool processRequest(Request request, Response& response);
 	bool serveRequests(int sockfd);
 
+	bool isValidId(std::string id);
+	bool isValidAge(int age);
+
 private:
 	ClientInfo client_info_;
-	MYSQL *conn_;
-	MYSQL_RES *res_;
-	MYSQL_ROW row_;
+	MYSQL *mysql_conn_;
+	MYSQL_RES *mysql_res_;
+	MYSQL_ROW mysql_row_;
 
 	std::stack<Request> undostack_;
     std::stack<Request> redostack_;
-	ThreadSafeQueue<Transaction>* loggingQueue_;
+	ThreadSafeQueue<Transaction>* logging_queue_;
 };
 
 #endif

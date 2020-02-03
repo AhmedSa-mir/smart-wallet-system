@@ -35,7 +35,7 @@ SOURCES += \
 HEADERS += \
     client.h \
     client_TCPSocket.h \
-    communication.h \
+    defs.h \
     TCPSocket.h \
     mainwindow.h \
     qcustomplot.h

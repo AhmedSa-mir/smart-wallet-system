@@ -57,8 +57,6 @@ void Client::sendRequest(Request request)
     {
         std::cerr << "ERROR writing to socket\n";
     }
-
-    std::cout << "Request sent: " << request_content << std::endl;
 }
 
 // Receives response message from the server
@@ -76,7 +74,6 @@ void Client::recvResponse(Response& response)
     }
 
     int msg_size = std::stoi(response.data);
-    std::cout << "Client Received " << msg_size << std::endl;
 
     // Receive message
     bytes_cnt = read(sockfd, response.data, msg_size);
@@ -85,17 +82,12 @@ void Client::recvResponse(Response& response)
         std::cerr << "ERROR reading from socket\n";
     }
 
-    std::cout << "Client Received: " << response.data << std::endl;
-
     // Separate response status from data
     std::string data(response.data);
     int delemiter = data.find(" ", 0);
     std::string status = data.substr(0, delemiter);
     std::string raw_data = data.substr(delemiter + 1);
     strcpy(response.data, raw_data.c_str());
-
-    std::cout << "Status received: " << status << std::endl;
-    std::cout << "raw_data received: " << raw_data << std::endl;
 
     response.status = RESPONSE_STATUS(std::stoi(status));
 }
@@ -130,7 +122,7 @@ RESPONSE_STATUS Client::login(std::string national_id, std::string& response_msg
     return response.status;
 }
 
-RESPONSE_STATUS Client::register_new_client(std::string name,
+RESPONSE_STATUS Client::registerNewClient(std::string name,
                                             std::string national_id,
                                             std::string age,
                                             std::string gender)
