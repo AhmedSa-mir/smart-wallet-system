@@ -5,7 +5,7 @@
 
 #include "client.h"
 
-enum PAGE_INDEX {LOGIN_PAGE, REGISTER_PAGE, MAIN_PAGE, AMOUNT_PAGE, RESPONSE_PAGE};
+enum PAGE_INDEX {LOGIN_PAGE, REGISTER_PAGE, MAIN_PAGE, STATISTICS_PAGE, AMOUNT_PAGE, RESPONSE_PAGE};
 
 namespace Ui {
 class MainWindow;
@@ -42,6 +42,12 @@ private slots:
     void on_redo_button_clicked();
 
     void on_exit_button_clicked();
+
+    void on_statistics_button_clicked();
+
+    void on_back_button_clicked();
+
+    void on_next_button_clicked();
 
 private:
     Ui::MainWindow *ui;

@@ -246,6 +246,26 @@ RESPONSE_STATUS Client::redo(unsigned long long& amount, bool& empty_stack, REQU
     return redo_response.status;
 }
 
+RESPONSE_STATUS Client::getStats(std::string& month_rates)
+{
+    Request request;
+    Response response;
+
+    request.type = GET_STATS;
+    memset(request.data, 0, MSG_MAX_SIZE);
+    request.size = 0;
+
+    sendRequest(request);
+    recvResponse(response);
+
+    if(response.status == SUCCESS)
+    {
+        month_rates.assign(response.data);
+    }
+
+    return response.status;
+}
+
 void Client::bye()
 {
     Request request;

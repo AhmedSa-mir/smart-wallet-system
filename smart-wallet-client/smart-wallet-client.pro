@@ -6,7 +6,8 @@
 
 QT       += core gui
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport charts
 
 TARGET = smart-wallet-client
 TEMPLATE = app
@@ -24,22 +25,26 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 
 SOURCES += \
-    ../src/TCPSocket.cpp \
     src/client.cpp \
     src/client_TCPSocket.cpp \
+    src/TCPSocket.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    qcustomplot.cpp
 
 HEADERS += \
     client.h \
     client_TCPSocket.h \
-    defs.h \
+    communication.h \
     TCPSocket.h \
-    mainwindow.h
+    mainwindow.h \
+    qcustomplot.h
 
 FORMS += \
     mainwindow.ui
 
 INCLUDEPATH += \
-   ../include/
-   include/
+   include
+
+RESOURCES += \
+    res.qrc

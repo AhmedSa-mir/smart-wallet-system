@@ -7,8 +7,9 @@
 #include <errno.h>
 #include <signal.h>
 #include <stack>
+#include <vector>
 
-#include "communication.h"
+#include "defs.h"
 #include "client_TCPSocket.h"
 
 class Client {
@@ -36,6 +37,7 @@ public:
     RESPONSE_STATUS sendTransaction(unsigned long long amount);
     RESPONSE_STATUS undo(unsigned long long& amount, bool& empty_stack, REQUEST_TYPE& type);
     RESPONSE_STATUS redo(unsigned long long& amount, bool& empty_stack, REQUEST_TYPE& type);
+    RESPONSE_STATUS getStats(std::string& month_rates);
 
     void bye();
 

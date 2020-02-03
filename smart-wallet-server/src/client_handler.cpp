@@ -263,6 +263,37 @@ bool ClientHandler::getBalance(unsigned long long& balance)
 	return true;
 }
 
+bool ClientHandler::getStats(std::vector<std::string>& transaction_dates,
+							 std::vector<unsigned long>& amounts)
+{
+	std::string query = "select date,amount from transaction where customer_id = "
+					  + std::to_string(client_info_.id);
+
+	std::cout << "Query: " << query << std::endl;
+
+	if(mysql_query(conn_, query.c_str()))
+	{
+		perror(mysql_error(conn_));
+		return false;
+	}
+
+	// Get query result
+	res_ = mysql_store_result(conn_);
+	// res = mysql_use_result(conn);
+
+	while(row_ = mysql_fetch_row(res_))
+	{
+		std::string date = row_[0];
+		std::string amount = row_[1];
+		transaction_dates.push_back(date);
+		amounts.push_back(stoull(amount));
+		std::cout << "Date: " << date << " - Amount: " << amount << std::endl;
+	}
+
+	return true;
+}
+
+
 void ClientHandler::sendResponse(int sockfd, Response response)
 {
 	// Setup response (status + message data)
@@ -498,6 +529,50 @@ bool ClientHandler::processRequest(Request request, Response& response)
 			// Send success + balance
 			response.status = SUCCESS;
 			strcpy(response.data,  std::to_string(balance).c_str());
+			response.size = strlen(response.data);
+		}
+	}
+	else if(type == GET_STATS)
+	{
+		std::vector<std::string> transaction_dates;
+		std::vector<unsigned long> amounts;
+
+		bool ret = getStats(transaction_dates, amounts);
+		if(!ret)
+		{
+			std::cout << "Error getting dates from DB\n";
+			strcpy(response.data, "Server response: (ERROR) Processing operation");
+			response.status = FAIL;
+		}
+		else
+		{
+			memset(response.data, 0, MSG_MAX_SIZE);
+
+			std::vector<unsigned long> month_rate(13,0);
+
+			for(int i = 0; i < transaction_dates.size(); ++i)
+			{
+				std::size_t dash1 = transaction_dates[i].find('-');
+		        std::string month = transaction_dates[i].substr(dash1+1,2);
+
+		        if(month[0] == '0')
+		        {
+		        	month_rate[int(month[1]) - '0'] += amounts[i];
+		    	}
+		    	else
+		    	{
+		    		month_rate[std::stoi(month)] += amounts[i];
+		    	}
+			}
+		        
+			strcpy(response.data, ("1 " + std::to_string(month_rate[1]) + " ").c_str());
+			for(int i = 2; i <= 12; ++i)
+			{
+				strcat(response.data, (std::to_string(i) + " " + std::to_string(month_rate[i]) + " ").c_str());
+			}
+
+			// Send success + transaction dates
+			response.status = SUCCESS;
 			response.size = strlen(response.data);
 		}
 	}

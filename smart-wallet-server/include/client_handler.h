@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <sstream>
 #include <stack>
+#include <vector>
 #include <mysql.h>
 
 #include "client_info.h"
@@ -26,6 +27,8 @@ public:
 	bool deposit(unsigned long long balance);
 	bool withdraw(unsigned long long balance);
 	bool getBalance(unsigned long long& balance);
+	bool getStats(std::vector<std::string>& transaction_dates,
+							 std::vector<unsigned long>& amounts);
 
 	void sendResponse(int sockfd, Response response);
 	void recvRequest(int sockfd, Request& request);

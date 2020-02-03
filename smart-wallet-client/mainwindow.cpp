@@ -286,3 +286,68 @@ void MainWindow::on_exit_button_clicked()
 
     this->close();
 }
+
+void MainWindow::on_statistics_button_clicked()
+{
+    QVector<double> x(12), y(12);   // plot data
+
+    std::string month_rates;
+    RESPONSE_STATUS status = client.getStats(month_rates);
+
+    if(status == FAIL)
+    {
+        ui->statusBar->showMessage("Server response: Failed!");
+    }
+    else if(status == SUCCESS)
+    {
+        // Split data by spaces
+        std::istringstream iss(month_rates);
+        std::string month, amount;
+        for (int i=0; i<12; ++i)
+        {
+          std::getline(iss, month, ' ');
+          std::getline(iss, amount, ' ');
+          x[i] = QCPAxisTickerDateTime::dateTimeToKey(QDate(1970, std::stoi(month), 1));
+          y[i] = std::stoi(amount);
+        }
+
+        QCPTextElement *title = new QCPTextElement(ui->custom_plot);
+        title->setText("Your Withdrawal Rate throughout the Year");
+        title->setFont(QFont("sans", 12, QFont::Bold));
+        ui->custom_plot->plotLayout()->insertRow(0);
+        ui->custom_plot->plotLayout()->addElement(0,0, title);
+
+        ui->custom_plot->yAxis->setRange(0, 60000);
+
+        QSharedPointer<QCPAxisTickerDateTime> dateTimeTicker(new QCPAxisTickerDateTime);
+        ui->custom_plot->xAxis->setTicker(dateTimeTicker);
+
+        ui->custom_plot->xAxis->setRange(QCPAxisTickerDateTime::dateTimeToKey(QDate(1970, 1, 1)), QCPAxisTickerDateTime::dateTimeToKey(QDate(1970, 12, 1)));
+        dateTimeTicker->setDateTimeFormat("MMM");
+
+        // create graph and assign data to it
+        ui->custom_plot->addGraph();
+        ui->custom_plot->graph(0)->setData(x, y);
+
+        QPen blueDotPen;
+        blueDotPen.setColor(QColor(30, 40, 255, 150));
+        blueDotPen.setStyle(Qt::DotLine);
+        blueDotPen.setWidthF(4);
+        ui->custom_plot->graph()->setPen(blueDotPen);
+
+        ui->custom_plot->xAxis->ticker()->setTickCount(12);
+        ui->custom_plot->yAxis->ticker()->setTickCount(6);
+
+        ui->custom_plot->xAxis->setLabel("Month");
+        ui->custom_plot->yAxis->setLabel("Withdrawal rate");
+
+        ui->custom_plot->replot();
+
+        ui->stackedWidget->setCurrentIndex(STATISTICS_PAGE);
+    }
+}
+
+void MainWindow::on_back_button_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(MAIN_PAGE);
+}
