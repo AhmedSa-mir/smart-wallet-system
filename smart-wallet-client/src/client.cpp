@@ -25,6 +25,11 @@ void Client::closeSockfd()
     close(socket_->getSockfd());
 }
 
+void Client::setRequestType(REQUEST_TYPE type)
+{
+    request_type_ = type;
+}
+
 // Sends request message to server
 void Client::sendRequest(Request request)
 {
@@ -82,20 +87,17 @@ void Client::recvResponse(Response& response)
 
     std::cout << "Client Received: " << response.data << std::endl;
 
+    // Separate response status from data
     std::string data(response.data);
-
-    // Split data by spaces
-    std::istringstream iss(data);
-    std::string status, raw_data;
-    std::getline(iss, status, ' ');
-    std::getline(iss, raw_data, ' ');
+    int delemiter = data.find(" ", 0);
+    std::string status = data.substr(0, delemiter);
+    std::string raw_data = data.substr(delemiter + 1);
+    strcpy(response.data, raw_data.c_str());
 
     std::cout << "Status received: " << status << std::endl;
     std::cout << "raw_data received: " << raw_data << std::endl;
 
     response.status = RESPONSE_STATUS(std::stoi(status));
-
-    strcpy(response.data, raw_data.c_str());
 }
 
 
@@ -111,46 +113,146 @@ bool Client::isValidAge(int age)
     return (age >= 18 && age < 200);
 }
 
-void Client::setRequestType(REQUEST_TYPE type)
+RESPONSE_STATUS Client::login(std::string national_id, std::string& response_msg)
 {
-    request_type_ = type;
+    Request request;
+    Response response;
+
+    request.type = LOGIN;
+    strcpy(request.data, national_id.c_str());
+    request.size = strlen(request.data);
+
+    sendRequest(request);
+    recvResponse(response);
+
+    response_msg.assign(response.data);
+
+    return response.status;
 }
 
-REQUEST_TYPE Client::getRequestType()
+RESPONSE_STATUS Client::register_new_client(std::string name,
+                                            std::string national_id,
+                                            std::string age,
+                                            std::string gender)
 {
-    return request_type_;
+    Request request;
+    Response response;
+
+    request.type = REGISTER;
+    std::string msg_content = name + " " + national_id + " " + age + " " + gender;
+    strcpy(request.data, msg_content.c_str());
+    request.size = strlen(request.data);
+
+    sendRequest(request);
+    recvResponse(response);
+
+    return response.status;
 }
 
-void Client::pushUndoStack(const Request& request)
+RESPONSE_STATUS Client::checkBalance(unsigned long long& balance)
 {
-    undostack_.push(request);
+    Request request;
+    Response response;
+
+    request.type = CHECK_BALANCE;
+    memset(request.data, 0, MSG_MAX_SIZE);
+    request.size = 0;
+
+    sendRequest(request);
+    recvResponse(response);
+
+    if(response.status == SUCCESS)
+    {
+        balance = std::stoull(response.data);
+    }
+
+    return response.status;
 }
 
-void Client::pushRedoStack(const Request& request)
+RESPONSE_STATUS Client::sendTransaction(unsigned long long amount)
 {
-    redostack_.push(request);
+    Request request;
+    Response response;
+
+    request.type = request_type_;
+    strcpy(request.data, std::to_string(amount).c_str());
+    request.size = strlen(request.data);
+
+    sendRequest(request);
+    recvResponse(response);
+
+    if(response.status == SUCCESS)
+    {
+        undostack_.push(request);
+    }
+
+    return response.status;
 }
 
-Request Client::popUndoStack()
+RESPONSE_STATUS Client::undo(unsigned long long& amount, bool& empty_stack, REQUEST_TYPE& type)
 {
-    Request request = undostack_.top();
-    undostack_.pop();
-    return request;
+    Request undo_request;
+    Response undo_response;
+
+    undo_request.type = UNDO;
+    memset(undo_request.data, 0, MSG_MAX_SIZE);
+    undo_request.size = 0;
+
+    sendRequest(undo_request);
+    recvResponse(undo_response);
+
+    if(undo_response.status == SUCCESS)
+    {
+        Request undo_request = undostack_.top();
+        amount = std::stoull(undo_request.data);
+        type = undo_request.type;
+
+        redostack_.push(undo_request);
+        undostack_.pop();
+        if(undostack_.empty())
+        {
+            empty_stack = true;
+        }
+    }
+
+    return undo_response.status;
 }
 
-Request Client::popRedoStack()
+RESPONSE_STATUS Client::redo(unsigned long long& amount, bool& empty_stack, REQUEST_TYPE& type)
 {
-    Request request = redostack_.top();
-    redostack_.pop();
-    return request;
+    Request redo_request;
+    Response redo_response;
+
+    redo_request.type = REDO;
+    memset(redo_request.data, 0, MSG_MAX_SIZE);
+    redo_request.size = 0;
+
+    sendRequest(redo_request);
+    recvResponse(redo_response);
+
+    if(redo_response.status == SUCCESS)
+    {
+        Request redo_request = redostack_.top();
+        amount = std::stoull(redo_request.data);
+        type = redo_request.type;
+
+        redostack_.pop();
+        if(redostack_.empty())
+        {
+            empty_stack = true;
+        }
+    }
+
+    return redo_response.status;
 }
 
-bool Client::isUndoStackEmpty()
+void Client::bye()
 {
-    return undostack_.empty();
-}
+    Request request;
 
-bool Client::isRedoStackEmpty()
-{
-    return redostack_.empty();
+    request.type = BYE;
+    memset(request.data, 0, MSG_MAX_SIZE);
+    request.size = 0;
+
+    sendRequest(request);
 }

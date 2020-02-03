@@ -4,7 +4,7 @@
 int main(int argc, char *argv[])
 {
     // Server IP & Port arguments required
-    if (argc != 3)
+    if (argc < 3)
     {
         std::cerr << "Usage: " << argv[0] << " <IP> <port>\n";
         return -1;

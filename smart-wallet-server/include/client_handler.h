@@ -6,6 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sstream>
+#include <stack>
 #include <mysql.h>
 
 #include "client_info.h"
@@ -17,7 +18,7 @@ public:
 	ClientHandler(ThreadSafeQueue<Transaction>* loggingQueue);
 	~ClientHandler();
 
-	bool getClientInfo(unsigned long national_id, ClientInfo& client_info);
+	int getClientInfo(unsigned long national_id, ClientInfo& client_info);
 	bool isValidId(std::string id);
 	bool isValidAge(int age);
 
@@ -26,9 +27,9 @@ public:
 	bool withdraw(unsigned long long balance);
 	bool getBalance(unsigned long long& balance);
 
-	void sendResponse(Response response, int sockfd);
-	std::string recvRequest(int sockfd);
-	bool processRequest(std::string data, Response& response);
+	void sendResponse(int sockfd, Response response);
+	void recvRequest(int sockfd, Request& request);
+	bool processRequest(Request request, Response& response);
 	bool serveRequests(int sockfd);
 
 private:
@@ -36,6 +37,9 @@ private:
 	MYSQL *conn_;
 	MYSQL_RES *res_;
 	MYSQL_ROW row_;
+
+	std::stack<Request> undostack_;
+    std::stack<Request> redostack_;
 	ThreadSafeQueue<Transaction>* loggingQueue_;
 };
 

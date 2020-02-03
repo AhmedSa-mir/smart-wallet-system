@@ -20,7 +20,7 @@ ClientHandler::~ClientHandler()
 	mysql_close(conn_);
 }
 
-bool ClientHandler::getClientInfo(unsigned long national_id, ClientInfo& client_info)
+int ClientHandler::getClientInfo(unsigned long national_id, ClientInfo& client_info)
 {
 	std::string query = "select * from customer where national_id = " + std::to_string(national_id);
 
@@ -29,7 +29,7 @@ bool ClientHandler::getClientInfo(unsigned long national_id, ClientInfo& client_
 	if(mysql_query(conn_, query.c_str()))
 	{
 		perror(mysql_error(conn_));
-		return false;
+		return -1;
 	}
 	
 	// Get query result
@@ -39,7 +39,7 @@ bool ClientHandler::getClientInfo(unsigned long national_id, ClientInfo& client_
 	if(rows_cnt != 1)
 	{
 		std::cout << "Error: " << rows_cnt << " rows with the same national_id\n";
-		return false;
+		return -2;
 	}
 	else
 	{
@@ -57,7 +57,7 @@ bool ClientHandler::getClientInfo(unsigned long national_id, ClientInfo& client_
 		std::cout << "balance: " << client_info.balance << std::endl;
 	}
 
-	return true;
+	return 0;;
 }
 
 bool ClientHandler::isValidId(std::string id)
@@ -74,10 +74,11 @@ bool ClientHandler::isValidAge(int age)
 
 bool ClientHandler::createNewAccount(const ClientInfo& client_info)
 {	
-	std::string query = "insert into customer(name, national_id, age, balance) "
+	std::string query = "insert into customer(name, national_id, age, gender, balance) "
 					  	"values('" + client_info.name + "',"
 					  	+ std::to_string(client_info.national_id) + ","
-					  	+ std::to_string(client_info.age) + ",0)";
+					  	+ std::to_string(client_info.age) + ",'"
+					  	+ client_info.gender +"',0)";
 
 	std::cout << "Query: " << query << std::endl;
 
@@ -214,7 +215,7 @@ bool ClientHandler::getBalance(unsigned long long& balance)
 	return true;
 }
 
-void ClientHandler::sendResponse(Response response, int sockfd)
+void ClientHandler::sendResponse(int sockfd, Response response)
 {
 	// Setup response (status + message data)
 	std::string msg_data(response.data);
@@ -242,13 +243,8 @@ void ClientHandler::sendResponse(Response response, int sockfd)
 	std::cout << "Response sent: " << response_content << std::endl;
 }
 
-std::string ClientHandler::recvRequest(int sockfd)
+void ClientHandler::recvRequest(int sockfd, Request& request)
 {
-	Request request;
-
-	memset(request.data, 0, MSG_MAX_SIZE);
-	request.size = 0;
-
 	// Receive message size first
 	int bytes_cnt = read(sockfd, request.data, sizeof(request.size));
 	if (bytes_cnt < 0)
@@ -267,12 +263,12 @@ std::string ClientHandler::recvRequest(int sockfd)
 	}
 
 	std::cout << "Client handler Received: " << request.data << std::endl;
-
-	return std::string(request.data);
 }
 
-bool ClientHandler::processRequest(std::string data, Response& response)
+bool ClientHandler::processRequest(Request request, Response& response)
 {
+	std::string data(request.data);
+
 	// Split data by spaces
 	std::istringstream iss(data);
 	std::string msg_type, raw_data;
@@ -293,10 +289,17 @@ bool ClientHandler::processRequest(std::string data, Response& response)
 		}
 		else
 		{
-			bool ret = getClientInfo(std::stoul(national_id), client_info_);
-			if(!ret)
+			int ret = getClientInfo(std::stoul(national_id), client_info_);
+			if(ret == -1)
 			{
 				std::cout << "Error getting client info from DB\n";
+				strcpy(response.data, "Server response: (ERROR) Failure!");
+				response.status = FAIL;
+			}
+			else if(ret == -2)
+			{
+				std::cout << "Error Client not registered\n";
+				strcpy(response.data, "Server response: (ERROR) Client not registered!");
 				response.status = FAIL;
 			}
 			else 
@@ -310,14 +313,16 @@ bool ClientHandler::processRequest(std::string data, Response& response)
 	}
 	else if(type == REGISTER)
 	{
-		std::string name, national_id, age;
+		std::string name, national_id, age, gender;
 		name = raw_data;
 		std::getline(iss, national_id, ' ');
 		std::getline(iss, age, ' ');
+		std::getline(iss, gender, ' ');
 
 		std::cout << "name: " << name << std::endl;
 		std::cout << "national_id: " << national_id << std::endl;
 		std::cout << "age: " << age << std::endl;
+		std::cout << "gender: " << gender << std::endl;
 
 		if(!isValidId(national_id))
 		{
@@ -337,11 +342,13 @@ bool ClientHandler::processRequest(std::string data, Response& response)
 			client_info.national_id = std::stoul(national_id);
 			client_info.age = stoi(age);
 			client_info.balance = 0;
+			client_info.gender = gender;
 
 			bool ret = createNewAccount(client_info);
 			if(!ret)
 			{
 				std::cout << "Error creating new account\n";
+				strcpy(response.data, "Server response: (ERROR) Creating new account");
 				response.status = FAIL;
 			}
 			else 
@@ -367,12 +374,16 @@ bool ClientHandler::processRequest(std::string data, Response& response)
 			bool ret = deposit(amount);
 			if(!ret)
 			{
-				std::cout << "Error withdraw from DB\n";
+				std::cout << "Error deposit in DB\n";
+				strcpy(response.data, "Server response: (ERROR) Processing operation");
 				response.status = FAIL;
 			}
 			else 
 			{
 				response.status = SUCCESS;
+				request.type = type;
+				strcpy(request.data, raw_data.c_str());
+				undostack_.push(request);
 			}
 		}
 	}
@@ -393,6 +404,7 @@ bool ClientHandler::processRequest(std::string data, Response& response)
 			if(!ret)
 			{
 				std::cout << "Error getting balance from DB\n";
+				strcpy(response.data, "Server response: (ERROR) Processing operation");
 				response.status = FAIL;
 			}
 			else 
@@ -408,11 +420,15 @@ bool ClientHandler::processRequest(std::string data, Response& response)
 					if(!ret)
 					{
 						std::cout << "Error withdraw from DB\n";
+						strcpy(response.data, "Server response: (ERROR) Processing operation");
 						response.status = FAIL;
 					}
 					else 
 					{
 						response.status = SUCCESS;
+						request.type = type;
+						strcpy(request.data, raw_data.c_str());
+						undostack_.push(request);
 					}
 				}
 			}
@@ -426,6 +442,7 @@ bool ClientHandler::processRequest(std::string data, Response& response)
 		if(!ret)
 		{
 			std::cout << "Error getting balance from DB\n";
+			strcpy(response.data, "Server response: (ERROR) Processing operation");
 			response.status = FAIL;
 		}
 		else 
@@ -435,6 +452,81 @@ bool ClientHandler::processRequest(std::string data, Response& response)
 			strcpy(response.data,  std::to_string(balance).c_str());
 			response.size = strlen(response.data);
 		}
+	}
+	else if(type == UNDO)
+	{
+		Request undo_request = undostack_.top();
+		unsigned long long amount = std::stoll(undo_request.data);
+	    
+	    if(undo_request.type == DEPOSIT)
+	    {
+	        bool ret = withdraw(amount);
+			if(!ret)
+			{
+				std::cout << "Error withdraw from DB\n";
+				strcpy(response.data, "Server response: (ERROR) Processing operation");
+				response.status = FAIL;
+			}
+			else 
+			{
+				response.status = SUCCESS;
+				undostack_.pop();
+				redostack_.push(undo_request);
+			}
+	    }
+	    else if(undo_request.type == WITHDRAW)
+	    {
+	        bool ret = deposit(amount);
+			if(!ret)
+			{
+				std::cout << "Error deposit in DB\n";
+				strcpy(response.data, "Server response: (ERROR) Processing operation");
+				response.status = FAIL;
+			}
+			else 
+			{
+				response.status = SUCCESS;
+				undostack_.pop();
+				redostack_.push(undo_request);
+			}
+	    }
+	}
+	else if(type == REDO)
+	{
+		Request redo_request = redostack_.top();
+		unsigned long long amount = std::stoll(redo_request.data);
+
+
+	    if(redo_request.type == DEPOSIT)
+	    {
+	    	bool ret = deposit(amount);
+			if(!ret)
+			{
+				std::cout << "Error deposit in DB\n";
+				strcpy(response.data, "Server response: (ERROR) Processing operation");
+				response.status = FAIL;
+			}
+			else 
+			{
+				response.status = SUCCESS;
+				redostack_.pop();
+			}
+	    }
+	    else if(redo_request.type == WITHDRAW)
+	    {
+			bool ret = withdraw(amount);
+			if(!ret)
+			{
+				std::cout << "Error withdraw from DB\n";
+				strcpy(response.data, "Server response: (ERROR) Processing operation");
+				response.status = FAIL;
+			}
+			else 
+			{
+				response.status = SUCCESS;
+				redostack_.pop();
+			}
+	    }
 	}
 	else if(type == BYE)
 	{		
@@ -448,15 +540,18 @@ bool ClientHandler::processRequest(std::string data, Response& response)
 bool ClientHandler::serveRequests(int sockfd)
 {
 	Response response;
+	Request request;
 	memset(response.data, 0, MSG_MAX_SIZE);
+	memset(request.data, 0, MSG_MAX_SIZE);
 	response.size = 0;
+	request.size = 0;
 
-	std::string data = recvRequest(sockfd);
+	recvRequest(sockfd, request);
 
-	bool exit = !processRequest(data, response);
+	bool exit = !processRequest(request, response);
 	if(!exit)
 	{
-		sendResponse(response, sockfd);
+		sendResponse(sockfd, response);
 		return true;
 	}
 

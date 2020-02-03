@@ -57,29 +57,16 @@ void MainWindow::on_login_button_clicked()
     }
     else
     {
-        Request request;
-        Response response;
+        std::string response_msg;
 
-        request.type = LOGIN;
-        strcpy(request.data, national_id.c_str());
-        request.size = strlen(request.data);
-
-        client.sendRequest(request);
-        client.recvResponse(response);
-
-        if(response.status == INVALID_ID)
+        RESPONSE_STATUS status = client.login(national_id, response_msg);
+        if(status == INVALID_ID || status == FAIL)
         {
-             ui->statusBar->showMessage("Server response: Invalid ID!");
+             ui->statusBar->showMessage(QString::fromStdString(response_msg));
         }
-        else if(response.status == FAIL)
+        else if(status == SUCCESS)
         {
-             ui->statusBar->showMessage("Server response: Failed!");
-        }
-        else if(response.status == SUCCESS)
-        {
-            std::string name(response.data);
-            ui->welcome_label->setText(QString::fromStdString("Welcome " + name));
-
+            ui->welcome_label->setText(QString::fromStdString("Welcome " + response_msg));
             ui->stackedWidget->setCurrentIndex(MAIN_PAGE);
         }
     }
@@ -92,7 +79,8 @@ void MainWindow::on_register_button_clicked()
 
     std::string name = ui->input_name->text().toStdString();
     std::string national_id = ui->input_id_2->text().toStdString();
-    std::string age = ui->input_age->text().toStdString();
+    std::string age = ui->input_age->text().toStdString();    
+    std::string gender = ui->gender_combox->currentText().toStdString();
 
     std::cout << "national_id= " << national_id << std::endl;
 
@@ -118,34 +106,22 @@ void MainWindow::on_register_button_clicked()
     }
     else
     {
-        Request request;
-        Response response;
-
-        request.type = REGISTER;
-        std::string msg_content = name + " " + national_id + " " + age;
-        strcpy(request.data, msg_content.c_str());
-        request.size = strlen(request.data);
-
-        client.sendRequest(request);
-        client.recvResponse(response);
-
-        if(response.status == INVALID_ID)
+        RESPONSE_STATUS status = client.register_new_client(name, national_id, age, gender);
+        if(status == INVALID_ID)
         {
             ui->statusBar->showMessage("Server response: Invalid ID!");
         }
-        else if(response.status == INVALID_AGE)
+        else if(status == INVALID_AGE)
         {
             ui->statusBar->showMessage("Server response: Invalid age!");
         }
-        else if(response.status == FAIL)
+        else if(status == FAIL)
         {
             ui->statusBar->showMessage("Server response: Failed!");
         }
-        else if(response.status == SUCCESS)
+        else if(status == SUCCESS)
         {
-            std::string name(response.data);
             ui->welcome_label->setText(QString::fromStdString("Welcome " + name));
-
             ui->stackedWidget->setCurrentIndex(MAIN_PAGE);
         }
     }
@@ -171,26 +147,18 @@ void MainWindow::on_checkbalance_button_clicked()
 {
     ui->statusBar->clearMessage();
 
-    Request request;
-    Response response;
+    unsigned long long balance = 0;
 
-    request.type = CHECK_BALANCE;
-    memset(request.data, 0, MSG_MAX_SIZE);
-    request.size = 0;
-
-    client.sendRequest(request);
-    client.recvResponse(response);
-
-    if(response.status == FAIL)
+    RESPONSE_STATUS status = client.checkBalance(balance);
+    if(status == FAIL)
     {
         ui->response_label->setText("Server response: Failed!");
         ui->stackedWidget->setCurrentIndex(RESPONSE_PAGE);
     }
-    else if(response.status == SUCCESS)
+    else if(status == SUCCESS)
     {
-        std::string balance(response.data);
-        ui->response_label->setText(QString::fromStdString("Your current balance is " + balance));
-
+        ui->response_label->setText(QString::fromStdString(
+                                    "Your current balance is " + std::to_string(balance)));
         ui->stackedWidget->setCurrentIndex(RESPONSE_PAGE);
     }
 }
@@ -207,37 +175,27 @@ void MainWindow::on_ok_button_clicked()
     }
     else
     {
-        Request request;
-        Response response;
-
-        request.type = client.getRequestType();
-        strcpy(request.data, std::to_string(amount).c_str());
-        request.size = strlen(request.data);
-
-        client.sendRequest(request);
-        client.recvResponse(response);
-
-        if(response.status == NOT_ENOUGH_MONEY)
+        RESPONSE_STATUS status = client.sendTransaction(amount);
+        if(status == NOT_ENOUGH_MONEY)
         {
             ui->response_label->setText("Transaction Failed: Not enough money!");
             ui->stackedWidget->setCurrentIndex(RESPONSE_PAGE);
         }
-        else if(response.status == INVALID_AMOUNT)
+        else if(status == INVALID_AMOUNT)
         {
             ui->response_label->setText("Server response: Invalid amount!");
             ui->stackedWidget->setCurrentIndex(RESPONSE_PAGE);
         }
-        else if(response.status == FAIL)
+        else if(status == FAIL)
         {
             ui->response_label->setText("Server response: Failed!");
             ui->stackedWidget->setCurrentIndex(RESPONSE_PAGE);
         }
-        else if(response.status == SUCCESS)
+        else if(status == SUCCESS)
         {
             ui->response_label->setText("Transaction done successfully");
             ui->stackedWidget->setCurrentIndex(RESPONSE_PAGE);
 
-            client.pushUndoStack(request);
             ui->undo_button->setEnabled(true);
         }
 
@@ -248,7 +206,6 @@ void MainWindow::on_ok_button_clicked()
 void MainWindow::on_ok_button_2_clicked()
 {
     ui->statusBar->clearMessage();
-
     ui->stackedWidget->setCurrentIndex(MAIN_PAGE);
 }
 
@@ -256,47 +213,33 @@ void MainWindow::on_undo_button_clicked()
 {
     ui->statusBar->clearMessage();
 
-    Request undo_request = client.popUndoStack();
-    Response undo_response;
+    unsigned long long amount = 0;
+    bool empty_stack = false;
+    REQUEST_TYPE type;
 
-    if(undo_request.type == DEPOSIT)
-    {
-        undo_request.type = WITHDRAW;
-    }
-    else if(undo_request.type == WITHDRAW)
-    {
-        undo_request.type = DEPOSIT;
-    }
-
-    client.sendRequest(undo_request);
-    client.recvResponse(undo_response);
-
-    if(undo_response.status == FAIL)
+    RESPONSE_STATUS status = client.undo(amount, empty_stack, type);
+    if(status == FAIL)
     {
         ui->statusBar->showMessage("Server response: Failed!");
-        client.pushUndoStack(undo_request);    // return it into the stack again
     }
-    else if(undo_response.status == SUCCESS)
+    else if(status == SUCCESS)
     {
-        if(undo_request.type == DEPOSIT)
+        if(type == DEPOSIT)
         {
-            std::string amount(undo_request.data);
             ui->statusBar->showMessage(QString::fromStdString(
-                           "Undo last transaction (WITHDRAW " + amount + "$): success!"));
+                           "Undo last transaction (DEPOSIT " + std::to_string(amount) + "$): success!"));
         }
-        else if(undo_request.type == WITHDRAW)
+        else if(type == WITHDRAW)
         {
-            std::string amount(undo_request.data);
             ui->statusBar->showMessage(QString::fromStdString(
-                           "Undo last transaction (DEPOSIT " + amount + "$): success!"));
+                           "Undo last transaction (WITHDRAW " + std::to_string(amount) + "$): success!"));
         }
 
-        if(client.isUndoStackEmpty())
+        if(empty_stack)
         {
             ui->undo_button->setDisabled(true);
         }
 
-        client.pushRedoStack(undo_request);
         if(!ui->redo_button->isEnabled())
         {
             ui->redo_button->setEnabled(true);
@@ -307,43 +250,30 @@ void MainWindow::on_undo_button_clicked()
 void MainWindow::on_redo_button_clicked()
 {
     ui->statusBar->clearMessage();
+    unsigned long long amount = 0;
+    bool empty_stack = false;
+    REQUEST_TYPE type;
 
-    Request redo_request = client.popRedoStack();
-    Response redo_response;
+    RESPONSE_STATUS status = client.redo(amount, empty_stack, type);
 
-    if(redo_request.type == DEPOSIT)
-    {
-        redo_request.type = WITHDRAW;
-    }
-    else if(redo_request.type == WITHDRAW)
-    {
-        redo_request.type = DEPOSIT;
-    }
-
-    client.sendRequest(redo_request);
-    client.recvResponse(redo_response);
-
-    if(redo_response.status == FAIL)
+    if(status == FAIL)
     {
         ui->statusBar->showMessage("Server response: Failed!");
-        client.pushRedoStack(redo_request);    // return it into the stack again
     }
-    else if(redo_response.status == SUCCESS)
+    else if(status == SUCCESS)
     {
-        if(redo_request.type == DEPOSIT)
+        if(type == DEPOSIT)
         {
-            std::string amount(redo_request.data);
             ui->statusBar->showMessage(QString::fromStdString(
-                           "Redo last transaction (WITHDRAW " + amount + "$): success!"));
+                           "Redo last transaction (DEPOSIT " + std::to_string(amount) + "$): success!"));
         }
-        else if(redo_request.type == WITHDRAW)
+        else if(type == WITHDRAW)
         {
-            std::string amount(redo_request.data);
             ui->statusBar->showMessage(QString::fromStdString(
-                           "Redo last transaction (DEPOSIT " + amount + "$): success!"));
+                           "Redo last transaction (WITHDRAW " + std::to_string(amount) + "$): success!"));
         }
 
-        if(client.isRedoStackEmpty())
+        if(empty_stack)
         {
             ui->redo_button->setDisabled(true);
         }
@@ -352,13 +282,7 @@ void MainWindow::on_redo_button_clicked()
 
 void MainWindow::on_exit_button_clicked()
 {
-    Request request;
-
-    request.type = BYE;
-    memset(request.data, 0, MSG_MAX_SIZE);
-    request.size = 0;
-
-    client.sendRequest(request);
+    client.bye();
 
     this->close();
 }

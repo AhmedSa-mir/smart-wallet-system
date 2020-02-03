@@ -10,6 +10,7 @@ typedef struct ClientInfo {
 	unsigned long national_id;
 	unsigned int age;
 	unsigned long long balance;
+	std::string gender;
 } ClientInfo;
 
 #endif

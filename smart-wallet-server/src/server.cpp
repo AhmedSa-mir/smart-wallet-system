@@ -40,7 +40,7 @@ void Server::logTransactions()
 	{
 
 		loggingQueue.pop(transaction);	// block for a transaction
-		std::cout << "LOOOG\n";
+
 		std::string request_type;
 		if(transaction.type == DEPOSIT)
 		{
