@@ -31,11 +31,11 @@ make
 
 Run server
 ```
-Populate DB first
-mysql -h localhost -u root -p smart-wallet < data.sql
+Create DB and populate it first
+mysql -h localhost -u root -p smartwallet < data.sql
 
 cd smart-wallet-server/bin/
-./server <port number> localhost <DB_user> <DB_password> smart-wallet
+./server <port number> localhost <DB_user> <DB_password> smartwallet
 ```
 
 Run client 

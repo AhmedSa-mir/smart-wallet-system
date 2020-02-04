@@ -7,7 +7,7 @@ int main(int argc, char *argv[])
 	// Port argument required
         if (argc != 6)
 	{
-                std::cerr << "Usage: " << argv[0] << " <port> localhost <DB_user> <DB_password> smart-wallet\n";
+                std::cerr << "Usage: " << argv[0] << " <port> localhost <DB_user> <DB_password> <DB_name>\n";
 		return -1;
 	}
 
