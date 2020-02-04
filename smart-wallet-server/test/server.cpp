@@ -2,18 +2,21 @@
 
 #include "server.h"
 
-
 int main(int argc, char *argv[])
 {
 	// Port argument required
-	if (argc != 2)
+        if (argc != 6)
 	{
-		std::cerr << "Usage: " << argv[0] << " <port>\n";
+                std::cerr << "Usage: " << argv[0] << " <port> localhost <DB_user> <DB_password> smart-wallet\n";
 		return -1;
 	}
 
 	// Get port number (passed as argument)
 	int port = std::stoi(argv[1]);
+        std::string db_server_ip(argv[2]);
+        std::string db_user(argv[3]);
+        std::string db_password(argv[4]);
+        std::string db_name(argv[5]);
 
 	Server server(port);
 
@@ -38,8 +41,14 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
+        DBParams db_params;
+        db_params.ip = db_server_ip;
+        db_params.user = db_user;
+        db_params.password = db_password;
+        db_params.db_name = db_name;
+
 	// Serve clients (infinite loop)
-	server.run();
+        server.run(db_params);
 
 	return 0; 
 }

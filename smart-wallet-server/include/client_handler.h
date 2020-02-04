@@ -10,13 +10,13 @@
 #include <vector>
 #include <mysql.h>
 
-#include "client_info.h"
 #include "defs.h"
+#include "server_defs.h"
 #include "thread-safe_queue.h"
 
 class ClientHandler {
 public:
-	ClientHandler(ThreadSafeQueue<Transaction>* logging_queue);
+	ClientHandler(ThreadSafeQueue<Transaction>* logging_queue, DBParams db_params);
 	~ClientHandler();
 
 	int getClientInfo(unsigned long national_id, ClientInfo& client_info);

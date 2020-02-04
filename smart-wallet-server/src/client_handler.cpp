@@ -1,11 +1,15 @@
 #include "client_handler.h"
 
-ClientHandler::ClientHandler(ThreadSafeQueue<Transaction>* logging_queue)
+ClientHandler::ClientHandler(ThreadSafeQueue<Transaction>* logging_queue, DBParams db_params)
 {
 	mysql_conn_ = mysql_init(NULL);
 	
 	// Connect to DB
-	if(!mysql_real_connect(mysql_conn_, "localhost", "root", "root", "smart-wallet", 0, NULL, 0))
+        if(!mysql_real_connect(mysql_conn_,
+                               db_params.ip.c_str(),
+                               db_params.user.c_str(),
+                               db_params.password.c_str(),
+                               db_params.db_name.c_str(), 0, NULL, 0))
 	{
 		perror(mysql_error(mysql_conn_));
 	}
@@ -63,7 +67,7 @@ bool ClientHandler::isValidId(std::string id)
 bool ClientHandler::isValidAge(int age)
 {
 	// TODO: Check age correctly
-	return (age > 18 && age < 200);
+        return (age > MIN_AGE && age < MAX_AGE);
 }
 
 bool ClientHandler::createNewAccount(const ClientInfo& client_info)

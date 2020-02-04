@@ -61,9 +61,9 @@ void Server::logTransactions()
 	logFile.close();
 }
 
-void Server::handleClient(int sockfd)
+void Server::handleClient(int sockfd, DBParams db_params)
 {
-	ClientHandler client_handler(&logging_queue);
+        ClientHandler client_handler(&logging_queue, db_params);
 
 	std::cout << "Client handler thread spawned\n";
 
@@ -75,7 +75,7 @@ void Server::handleClient(int sockfd)
 	std::cout << "Client handler thread exiting\n";
 }
 
-void Server::run()
+void Server::run(DBParams db_params)
 {
 	// Spawn a thread to log transactions
 	std::thread logging_thread(&Server::logTransactions, this);
@@ -92,7 +92,7 @@ void Server::run()
 		else
 		{
 			// Spawn a thread to serve the client
-			std::thread th(&Server::handleClient, this, new_sockfd);
+                        std::thread th(&Server::handleClient, this, new_sockfd, db_params);
 			th.detach();
 		}
 	}

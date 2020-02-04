@@ -5,12 +5,9 @@
 #include <stdint.h>
 
 #define MSG_MAX_SIZE 7000
-#define MAX_AGE 200
-#define MIN_AGE 18
 
 enum RESPONSE_STATUS {SUCCESS, FAIL, INVALID_ID, INVALID_AGE, INVALID_AMOUNT, NOT_ENOUGH_MONEY};
 enum REQUEST_TYPE {NONE, LOGIN, REGISTER, DEPOSIT, WITHDRAW, CHECK_BALANCE, GET_STATS, UNDO, REDO, BYE};
-
 
 typedef struct Request {
 	char data[MSG_MAX_SIZE];
@@ -23,13 +20,5 @@ typedef struct Response {
 	uint32_t size;
 	RESPONSE_STATUS status;
 } Response;
-
-typedef struct Transaction {
-	std::string customer_name;
-	unsigned long customer_id;
-	REQUEST_TYPE type;
-	unsigned long long amount;
-	std::string date;
-} Transaction;
 
 #endif

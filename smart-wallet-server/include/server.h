@@ -8,7 +8,7 @@
 #include <errno.h>
 
 #include "defs.h"
-#include "client_info.h"
+#include "server_defs.h"
 #include "client_handler.h"
 #include "server_TCPSocket.h"
 #include "thread-safe_queue.h"
@@ -23,8 +23,8 @@ public:
 	int listenOnSocket();
 	int acceptConnection();
 
-	void run();
-	void handleClient(int sockfd);
+	void run(DBParams db_params);
+	void handleClient(int sockfd, DBParams db_params);
 
 	void logTransactions();
 
